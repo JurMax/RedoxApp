@@ -1,0 +1,220 @@
+/*
+ * JOverture.cpp
+ *
+ *  Created on: 12 nov. 2016
+ *      Author: jurriaanvandenberg
+ */
+
+#ifdef _WIN32
+	#ifdef _WIN64
+		#define OS "Windows (64-bit)"
+	#else
+		#define OS "Windows (32-bit)"
+	#endif
+#elif __APPLE__
+	#include "TargetConditionals.h"
+	#if TARGET_IPHONE_SIMULATOR
+		#define OS "IOS (Simulated)"
+	#elif TARGET_OS_IPHONE
+		#define OS "IOS"
+	#elif TARGET_OS_MAC
+		#define OS "MacOS"
+	#else
+    	#define OS "Unknown Apple platform"
+	#endif
+#elif __ANDROID__
+	#define OS "Android"
+#elif __linux__
+	#define OS "Linux"
+#elif __unix__ // unix system not caught above
+	#define OS "Unkown Unix OS"
+#else
+	#define OS "Unkown OS"
+#endif
+
+#include <JOverture.hpp>
+
+#include <JResources.hpp>
+#include <JRenderer.hpp>
+#include <JBezier.hpp>
+
+
+void updateFPS();
+int initSDL();
+
+std::string Overture_CurrentOS = OS;
+int WindowWidth = 0;
+int WindowHeight = 0;
+
+bool isRunning;
+int frametimelast = 0;
+int framecount = 0;
+int framespersecond = 0;
+
+void (*renderFunc)();
+void (*updateFunc)();
+
+
+int Overture_Init() {
+	SDL_Log("== Starting Overture Engine ==");
+	SDL_Log("Running on [%s]", Overture_CurrentOS.c_str());
+
+	if (!initSDL()) {
+		SDL_Log("Failed to initialize SDL!\n");
+	}
+	else {
+		SDL_Log("SDL Initialization succesvol");
+
+		if (!Renderer_Init()) {
+
+		}
+		else {
+			if (!resources::load()) {
+				SDL_Log("Failed to load resources!\n");
+			}
+			else {
+				SDL_Log("Loading resources succesvol");
+				return 1;
+			}
+		}
+	}
+
+
+	return 0;
+}
+
+
+int initSDL() {
+	bool success = true;
+
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		SDL_Log("SDL failed to initialize! SDL Error: %s\n", SDL_GetError());
+		success = false;
+	}
+	else {
+
+		//Set texture filtering to linear
+		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
+        SDL_DisplayMode displayMode;
+        if (SDL_GetCurrentDisplayMode(0, &displayMode) == 0) {
+            jScreenRect.w = displayMode.w;
+            jScreenRect.h = displayMode.h;
+        }
+
+		rWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, jScreenRect.w, jScreenRect.h,
+				SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+
+		if (rWindow == NULL) {
+			SDL_Log("Window could not be created! SDL Error: %s\n", SDL_GetError());
+			success = false;
+		}
+		else {
+			rRenderer = SDL_CreateRenderer(rWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+			if(rRenderer == NULL) {
+				SDL_Log("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+				success = false;
+			}
+			else {
+				SDL_SetRenderDrawColor(rRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+			}
+		}
+	}
+
+	return success;
+}
+
+
+void Overture_SetUpdateFunc( void (*f)() ) {
+	updateFunc = (*f);
+}
+
+
+void Overture_SetRenderFunc( void (*f)() ) {
+	renderFunc = (*f);
+}
+
+
+
+void Overture_Start() {
+	frametimelast = SDL_GetTicks();
+
+	isRunning = true;
+	while(isRunning) {
+		updateFPS();
+
+		string str = "SDL Window | FPS: ";// + to_string(framespersecond);
+		SDL_SetWindowTitle(rWindow, str.c_str());
+
+		inputhandeling::handleEvents();
+		updateBezierAnimations();
+
+		(*updateFunc)();
+
+		if (Overture_IsMobile())
+			SDL_SetRenderDrawColor(rRenderer, 0x30, 0xCF, 0x63, 0xFF);
+		else
+			SDL_SetRenderDrawColor(rRenderer, 0x40, 0xA2, 0xBF, 0xFF);
+		SDL_RenderClear(rRenderer);
+
+		(*renderFunc)();
+
+		SDL_RenderPresent(rRenderer);
+	}
+}
+
+
+bool Overture_IsRunning() {
+	return isRunning;
+}
+
+
+void Overture_Stop() {
+	SDL_Log("Shutting down...");
+	isRunning = false;
+}
+
+
+
+void Overture_Close() {
+	resources::free();
+
+	SDL_DestroyRenderer(rRenderer);
+	SDL_DestroyWindow(rWindow);
+	rWindow = NULL;
+	rRenderer = NULL;
+
+	SDL_Log("Application closed after %i ms", SDL_GetTicks());
+	SDL_Quit();
+}
+
+
+
+void updateFPS() {
+	framecount += 1;
+
+	if (SDL_GetTicks() - frametimelast > 1000) {
+		frametimelast= SDL_GetTicks();
+		framespersecond = framecount;
+		framecount = 0;
+	}
+}
+
+
+bool Overture_IsMobile() {
+	std::string ios("IOS");
+
+	if (Overture_CurrentOS == "Android" || Overture_CurrentOS.compare(0, ios.length(), ios) == 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+
+
+
+
+
+

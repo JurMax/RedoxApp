@@ -1,0 +1,4 @@
+INDEX VERSION 1.127+/Users/jurriaanvandenberg/Documents/Programming/C++/RedoxApp/.metadata/.plugins/org.eclipse.jdt.core
+3682538896.index
+3400727629.index
+1270315800.index

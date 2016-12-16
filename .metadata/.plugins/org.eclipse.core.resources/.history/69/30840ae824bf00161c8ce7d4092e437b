@@ -1,0 +1,307 @@
+//
+//  inputhandler.cpp
+//  2d - game
+//
+//  Created by Jurriaan van den Berg on 11-02-16.
+//  Copyright © 2016 Spasticom. All rights reserved.
+//
+
+#include <JInput.hpp>
+
+#include <JOverture.hpp>
+#include <JRenderer.hpp>
+
+
+JKey keysDown[16];
+bool keysPressed[16]; /* only active for one tick */
+int itemsInKeysDown = 0;
+
+InputPointer pointers[16];
+int pointerPlace = 0;
+
+string inputText = "";
+bool typing = false;
+
+bool screenDown = false;
+bool screenPressed = false;
+
+
+////////////////////// PUBLIC //////////////////////
+
+bool isKeyPressed(JKey code) {
+    bool isPressed = false;
+    for (int i = 0; i < itemsInKeysDown; i++) {
+    	if (keysDown[i] == code && keysPressed[i]) {
+    		isPressed = true;
+    		break;
+    	}
+    }
+    return isPressed;
+}
+
+bool isKeyDown(JKey code) {
+    bool isDown = false;
+    for (int i = 0; i < itemsInKeysDown; i++) {
+    	if (keysDown[i] == code) {
+    		isDown = true;
+    		break;
+    	}
+    }
+
+    return isDown;
+}
+
+
+bool isScreenPressed() {
+	return screenPressed;
+}
+
+bool isScreenDown() {
+	return screenDown;
+}
+
+
+string getInputLine() {
+	// to number: ::atof(inputText.c_str())
+    return inputText;
+}
+
+bool isTyping() {
+	return typing;
+}
+
+
+
+////////////////////// PRIVATE //////////////////////
+
+void inputhandeling::handleEvents() {
+
+    /* set all keysPressed to false */
+    if (itemsInKeysDown > 0) {
+        for (int i = 0; i < itemsInKeysDown; i++) {
+            keysPressed[i] = false;
+        }
+    }
+    for (int i = 0; i < 16; i++) {
+    	if (pointers[i].pressed) {
+    		pointers[i].pressed = false;
+    	}
+    }
+
+    screenPressed = false;
+
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+
+        if (e.type == SDL_QUIT) {
+        	Overture_Stop();
+            break;
+        }
+		else if(e.type == SDL_WINDOWEVENT) {
+			if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+				SDL_GetWindowSize(rWindow, &Overture_WindowWidth, &Overture_WindowHeight);
+			}
+		}
+		else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP || e.type == SDL_TEXTINPUT) {
+			handleKeyInput(e);
+		}
+        else if (e.type == SDL_MOUSEBUTTONUP || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEMOTION ||
+        		 e.type == SDL_FINGERDOWN || e.type == SDL_FINGERUP || e.type == SDL_FINGERMOTION) {
+        	handlePointerInput(e);
+        }
+	    else if (e.type == SDL_DROPFILE) {
+	    	char* dropped_filedir;
+	        dropped_filedir = e.drop.file;
+	        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "You dropped a file!", dropped_filedir, rWindow);
+	        // Hiermee is het mogelijk om super-secrete messages te geven als je bepaalde bestanden drop op bepaalde momenten in een spel.
+	        SDL_free(dropped_filedir);
+	    }
+    }
+
+}
+
+
+void inputhandeling::handleKeyInput( SDL_Event e ) {
+
+    bool keyModState = false;
+    if (Overture_CurrentOS == "MacOS") {
+    	keyModState = SDL_GetModState() & (KMOD_LGUI | KMOD_RGUI);
+    }
+    else {
+    	keyModState = SDL_GetModState() & KMOD_CTRL;
+    }
+
+    if (e.type == SDL_KEYDOWN) {
+		JKey key = (JKey) e.key.keysym.scancode;
+
+    	if (!typing) {
+    		if (!keyModState) {
+    			inputhandeling::addKey(key);
+    		}
+    		else if (key == KEY_Z) {
+    		}
+
+    		/** TODO-debug: this is for testing purposes */
+    		if (key == KEY_RETURN) {
+    			typing = true;
+        		SDL_StartTextInput();
+        		SDL_Log("-Started typing-");
+    		}
+    	}
+    	else {
+
+    		if (key == KEY_BACKSPACE && inputText.length() > 0) {
+				inputText.pop_back();
+			}
+			else if (keyModState && key == KEY_C) {
+				SDL_SetClipboardText(inputText.c_str());
+			}
+			else if (keyModState && key == KEY_X) {
+				SDL_SetClipboardText(inputText.c_str());
+				inputText = "";
+			}
+			else if (keyModState && key == KEY_V) {
+				inputText += SDL_GetClipboardText();
+			}
+
+    		/** TODO-debug: this is for testing purposes */
+			if (key == KEY_RETURN) {
+	    		typing = false;
+	    		SDL_StopTextInput();
+	    		SDL_Log("-Stoped typing-");
+			}
+			std::cout << "text1: " << inputText << std::endl;
+    	}
+
+    }
+    else if (e.type == SDL_KEYUP) {
+    	JKey key = (JKey) e.key.keysym.scancode;
+    	inputhandeling::removeKey(key);
+    }
+	else if (e.type == SDL_TEXTINPUT) {
+		if (!keyModState) {
+			inputText += e.text.text;
+			/** TODO-debug: */
+			std::cout << "text2: " << inputText << std::endl;
+		}
+	}
+}
+
+/**
+ *  Add a key to the keybuffers. These are used to determine if a key is (still) pressed.
+ */
+void inputhandeling::addKey( JKey key ) {
+
+    if (itemsInKeysDown < 16) {
+        bool isAlreadyAdded = false;
+        for (int i = 0; i < itemsInKeysDown; i++) {
+            if (keysDown[i] == key) {
+                isAlreadyAdded = true;
+            }
+        }
+        if (isAlreadyAdded == false) {
+            keysDown[itemsInKeysDown] = key;
+            keysPressed[itemsInKeysDown] = true;
+            itemsInKeysDown++;
+        }
+    }
+}
+
+void inputhandeling::removeKey( JKey key ) {
+
+    if (itemsInKeysDown > 0) {
+        for (int i = 0; i < itemsInKeysDown; i++) {
+            if (keysDown[i] == key) {
+                for (int i2 = i; i2 < itemsInKeysDown - 1; i2++) {
+                    keysDown[i2] = keysDown[i2+1];
+                }
+                itemsInKeysDown--;
+            }
+        }
+    }
+}
+
+
+void inputhandeling::handlePointerInput( SDL_Event e ) {
+
+    if (!Overture_IsMobile()) {
+    	if (!pointers[0].active) {
+			pointers[0].active = true;
+    	}
+
+        if (e.type == SDL_MOUSEBUTTONDOWN) {
+        	screenDown = true;
+        	screenPressed = true;
+
+        	if (e.button.button == SDL_BUTTON_LEFT) {
+        		pointers[0].down = true;
+				pointers[0].pressed = true;
+
+				pointers[0].position.x = ((float) e.button.x) / ((float) Overture_WindowWidth);
+				pointers[0].position.y = ((float) e.button.y) / ((float) Overture_WindowHeight);
+				pointers[0].lastPressedPosition.x = pointers[0].position.x;
+				pointers[0].lastPressedPosition.y = pointers[0].position.y;
+        	}
+        }
+        else if (e.type == SDL_MOUSEBUTTONUP) {
+        	screenDown = false;
+
+        	if (e.button.button == SDL_BUTTON_LEFT) {
+        		pointers[0].down = false;
+
+				pointers[0].position.x = ((float) e.button.x) / ((float) Overture_WindowWidth);
+				pointers[0].position.y = ((float) e.button.y) / ((float) Overture_WindowHeight);
+				pointers[0].lastPressedPosition.x = pointers[0].position.x;
+				pointers[0].lastPressedPosition.y = pointers[0].position.y;
+        	}
+        }
+        else if (e.type == SDL_MOUSEMOTION) {
+			pointers[0].position.x = ((float) e.button.x) / ((float) Overture_WindowWidth);
+			pointers[0].position.y = ((float) e.button.y) / ((float) Overture_WindowHeight);
+        }
+    }
+    else {
+		if (e.type == SDL_FINGERDOWN) {
+			if (pointerPlace > 15) {
+				pointerPlace = 0;
+			}
+
+			pointers[pointerPlace].fingerID = e.tfinger.fingerId;
+			pointers[pointerPlace].active = true;
+			pointers[pointerPlace].down = true;
+			pointers[pointerPlace].pressed = true;
+
+			pointers[pointerPlace].position.x = e.tfinger.x;
+			pointers[pointerPlace].position.y = e.tfinger.y;
+			pointers[pointerPlace].lastPressedPosition.x = e.tfinger.x;
+			pointers[pointerPlace].lastPressedPosition.y = e.tfinger.y;
+
+			pointerPlace++;
+		}
+		else if (e.type == SDL_FINGERMOTION) {
+			for (int i = 0; i < 16; i++) {
+				if (pointers[i].active) {
+					if (pointers[i].fingerID == e.tfinger.fingerId) {
+						pointers[i].position.x = e.tfinger.x;
+						pointers[i].position.y = e.tfinger.y;
+					}
+				}
+			}
+		}
+		else if (e.type == SDL_FINGERUP) {
+			for (int i = 0; i < 16; i++) {
+				if (pointers[i].active) {
+					if (pointers[i].fingerID == e.tfinger.fingerId) {
+						pointers[i].active = false;
+						pointers[i].down = false;
+					}
+				}
+			}
+
+			InputPointer input;
+		}
+    }
+}
+
+
+

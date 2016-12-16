@@ -1,0 +1,11 @@
+ddms.logcat.auotmonitor.level=error
+ddms.logcat.automonitor.userprompt=true
+eclipse.preferences.version=1
+logcat.view.colsize.Application=131
+logcat.view.colsize.Level=17
+logcat.view.colsize.PID=46
+logcat.view.colsize.TID=46
+logcat.view.colsize.Tag=102
+logcat.view.colsize.Text=534
+logcat.view.colsize.Time=140
+logcat.view.filters.list=name\: 'App', tag\: '', text\: '', pid\: '', app\: 'com.jurmax.redox', level\: 'verbose', name\: 'My Application', tag\: 'SDL/APP', text\: '', pid\: '', app\: 'com.jurmax.redox', level\: 'verbose', 

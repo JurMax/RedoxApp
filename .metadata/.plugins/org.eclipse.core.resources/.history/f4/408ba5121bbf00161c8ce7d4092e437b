@@ -1,0 +1,75 @@
+//
+//  inputhandler.hpp
+//  2d-game
+//
+//  Created by Jurriaan van den Berg on 10-04-16.
+//  Copyright © 2016 JurMax. All rights reserved.
+//
+
+#ifndef inputhandler_hpp
+#define inputhandler_hpp
+
+#include <stdio.h>
+#include <iostream>
+#include <SDL.h>
+#include <JKeys.hpp>
+#include <JVector.hpp>
+
+using namespace std;
+
+
+bool isKeyDown( JKey code );
+bool isKeyPressed( JKey code );
+
+bool isScreenPressed();
+bool isScreenDown();
+
+string getInputLine();
+bool isTyping();
+
+
+
+namespace inputhandeling {
+
+    void handleEvents();
+    
+    void handleKeyInput( SDL_Event e );
+    void addKey( JKey key );
+    void removeKey( JKey key );
+
+    void handlePointerInput( SDL_Event e );
+}
+
+
+class InputPointer {
+public:
+	InputPointer() {
+		fingerID = 0;
+		down = false;
+		pressed = false;
+		position = Vector2(0, 0);
+		lastPressedPosition = Vector2(0, 0);
+	}
+
+	SDL_FingerID fingerID;
+
+	/** This inputpointer will become inactive if down = false*/
+	bool down;
+	bool pressed;
+
+	/** positions are normalised (0 to 1) */
+	Vector2 position;
+	Vector2 lastPressedPosition;
+
+};
+
+extern InputPointer pointers[16];
+
+/** Directly when mouse/touch down */
+bool isAreaPressed(float posX, float posY, float width, float height);
+bool isAreaDown(float posX, float posY, float width, float height);
+/** when mouse/touch down and also up from same area */
+bool isAreaClicked(float posX, float posY, float width, float height);
+
+
+#endif /* inputhandler_hpp */

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;Redox/jni/overture/headers&apos; to &apos;include&apos;" description="Rename resource &apos;headers&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="jni/overture/headers" name="include" stamp="1481053249102" updateReferences="true"/>
+</session>

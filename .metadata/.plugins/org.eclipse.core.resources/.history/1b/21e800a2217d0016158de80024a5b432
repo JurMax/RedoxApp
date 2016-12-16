@@ -1,0 +1,24 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+CPP_SRCS += \
+../src/C++\ test.cpp 
+
+OBJS += \
+./src/C++\ test.o 
+
+CPP_DEPS += \
+./src/C++\ test.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+src/C++\ test.o: ../src/C++\ test.cpp
+	@echo 'Building file: $<'
+	@echo 'Invoking: Cross G++ Compiler'
+	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/C++ test.d" -MT"src/C++\ test.d" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+

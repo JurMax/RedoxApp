@@ -1,0 +1,6 @@
+15:45:52 **** Incremental Build of configuration Build (GNU) for project RedoxReactions ****
+make all 
+make: *** No rule to make target `all'.  Stop.
+
+15:45:52 Build Finished (took 113ms)
+

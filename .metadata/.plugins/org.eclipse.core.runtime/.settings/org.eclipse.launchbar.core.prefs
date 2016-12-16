@@ -1,0 +1,7 @@
+configDescList=org.eclipse.launchbar.core.descriptorType.default\:NDK Builder,org.eclipse.launchbar.core.descriptorType.default\:Redox Android,org.eclipse.launchbar.core.descriptorType.default\:Run Android,org.eclipse.launchbar.core.descriptorType.default\:Redox OSX
+eclipse.preferences.version=1
+org.eclipse.launchbar.core.descriptorType.default\:2DTest/activeLaunchMode=run
+org.eclipse.launchbar.core.descriptorType.default\:2DTest/activeLaunchTarget=org.eclipse.remote.LocalServices\:Local
+org.eclipse.launchbar.core.descriptorType.default\:Redox\ Android/activeLaunchMode=run
+org.eclipse.launchbar.core.descriptorType.default\:Redox\ Android/activeLaunchTarget=org.eclipse.remote.LocalServices\:Local
+org.eclipse.launchbar.core.descriptorType.default\:Run\ Android/activeLaunchMode=run
